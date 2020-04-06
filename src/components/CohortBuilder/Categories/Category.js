@@ -97,8 +97,6 @@ export default class Category extends React.Component {
         onCancel={() => {
           this.handleCloseFilter(false);
         }}
-        showOntologyBrowserButton={field === 'observed_phenotype.name'}
-        onOntologyClicked={this.onOntologyClicked}
         field={field}
         arrangerProjectId={arrangerProjectId}
         arrangerProjectIndex={ARRANGER_API_PARTICIPANT_INDEX_NAME}
