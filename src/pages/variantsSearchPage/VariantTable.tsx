@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Button, Table, Tooltip } from 'antd';
 import ConsequencesCell from './ConsequencesCell';
 import { useVariantSearchTableData } from 'store/graphql/variants/searchActions';
@@ -31,6 +31,7 @@ import {
 import ServerError from 'components/Variants/ServerError';
 import ROUTES from 'common/routes';
 import style from './VariantTable.module.scss';
+import usePagination from '../../hooks/usePagination';
 import { AlignmentOptions } from 'ui/TableOptions';
 
 const DEFAULT_PAGE_NUM = 1;
@@ -235,20 +236,27 @@ const generateColumns = (props: Props, studyList: StudyInfo[]) =>
 const makeRows = (rows: VariantEntityNode[]) =>
   rows.map((row: VariantEntityNode, index: number) => ({ ...row.node, key: `${index}` }));
 
-const VariantTable: FunctionComponent<Props> = (props) => {
-  const [currentPageNum, setCurrentPageNum] = useState(DEFAULT_PAGE_NUM);
-  const [currentPageSize, setCurrentPageSize] = useState(DEFAULT_PAGE_SIZE);
+const VariantTable = (props: Props) => {
+  const [currentPagination, setCurrentPagination] = usePagination(
+    DEFAULT_PAGE_NUM,
+    DEFAULT_PAGE_SIZE,
+  );
+
   const { selectedSuggestion } = props;
   const {
     loading: loadingData,
     results: { variants: data, total },
     studies,
     error,
-  } = useVariantSearchTableData(selectedSuggestion, currentPageNum, currentPageSize);
+  } = useVariantSearchTableData(
+    selectedSuggestion,
+    currentPagination.pageNum,
+    currentPagination.pageSize,
+  );
 
   useEffect(() => {
     //make sure page number is reset when another selection is selected
-    setCurrentPageNum(DEFAULT_PAGE_NUM);
+    setCurrentPagination(DEFAULT_PAGE_NUM, DEFAULT_PAGE_SIZE);
   }, [selectedSuggestion.suggestionId]);
 
   if (error) {
@@ -257,17 +265,16 @@ const VariantTable: FunctionComponent<Props> = (props) => {
 
   return (
     <Table
-      title={() => generatePaginationMessage(currentPageNum, currentPageSize, total)}
+      title={() =>
+        generatePaginationMessage(currentPagination.pageNum, currentPagination.pageSize, total)
+      }
       tableLayout="auto"
       pagination={{
-        current: currentPageNum,
+        current: currentPagination.pageNum,
         total: total,
         onChange: (page, pageSize) => {
-          if (currentPageNum !== page) {
-            setCurrentPageNum(page);
-          }
-          if (currentPageSize !== pageSize) {
-            setCurrentPageSize(pageSize || DEFAULT_PAGE_SIZE);
+          if (currentPagination.pageNum !== page || currentPagination.pageSize !== pageSize) {
+            setCurrentPagination(page, pageSize || DEFAULT_PAGE_SIZE);
           }
         },
       }}
